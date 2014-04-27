@@ -101,9 +101,9 @@ func HandleRoot(resp http.ResponseWriter, req *http.Request) {
 
 	if assoc.GitHubLogin == "" {
 		resp.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(resp, "unrecognized host")
+		fmt.Fprintln(resp, "unrecognized host: ", host)
 		fmt.Fprintln(resp)
-		fmt.Fprintf(resp, "use the GAE admin panel to associate a github login the datastore DomainAssocs entity %s\n", assoc.Key)
+		fmt.Fprintf(resp, "associate a github login with datastore DomainAssocs entity %s using the GAE admin dashboard\n", assoc.Key)
 		return
 	}
 

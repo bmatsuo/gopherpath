@@ -1,3 +1,101 @@
-go import path spot
+Gopherpath -- reliably hosted Go import paths
 
-a place for reliably hosting custom go import paths
+Gopherpath is an application for Google App Engine and serves import metadata
+for the `go get` tool.  It lets you easily 'self-host' your own import paths
+(e.g. go.bmats.co/gopherpath/xxx) in an environment where you don't have to
+actually worry about maintaining servers.
+
+The tool is similar in spirit to [gopkg.in](gopkg.in), and may eventually pull
+in some of its features (semantic version support).  The primary difference is
+that gopherpath only serves metadata for a single github user (you).
+
+Ideally there will be a script to automate as much of the setup as possible.
+
+
+Application setup
+
+
+- Create an application on [Google App Engine](https://appengine.google.com/).
+
+- Install the [Go SDK](https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Go)
+  for Google App Engine.
+
+- Clone this repository
+
+- Copy example.app.yaml to app.yaml and set the "application" key to the name
+  of the application you created.
+
+- Optionally remove the app.yaml entry from .gitignore and commit app.yaml on
+  your fork.  This lets app versions be tracked in git and can be useful if
+  working in a distributed environment (on a team, multiple machines, etc). The
+  application version should only come into play when updating your fork to a new
+  version of gopherpath. It allows you to stage updates so that metadata serving
+  can remain stable in the case of unforseen backwards incompatability.
+
+- Deploy the application to the cloud with `goapp deploy`.
+
+
+At this point. The service should be running on appengine. But it cannot serve
+packages.  A custom domain needs to be set up for your import paths.  And the
+application has to know where (what github account) to point `go get` for
+source code.
+
+
+Application configuration:
+
+
+Do this before setting up a custom domain because it is faster and easier to
+make sure things are working before beginning the potentially long process of
+setting up a custom domain (DNS propogation makes the time required highly
+variable)
+
+Configuration is stored in the datastore. Because of this, the system must be
+primed so stub entities can be created.
+
+- Call out to gopherpath with curl to generate stub entities.
+
+    curl http://my-gopherpath-app.appspot.com
+
+- Follow instructions stated in the HTTP response to update entities using the
+  Google App Engine admin dashboard.
+
+- Repeat the curl call until it no longer tells you to update the datastore.
+
+- Test `go get`
+
+    go get my-gopherpath-app.appspot.com/mypkg
+
+
+Domain setup
+
+
+No one wants to prefix all their package import paths with
+"my-gopherpath.appspot.com/".  So you need to set up a custom domain.
+
+- Buy a nice, short domain to use as your import path prefix/namespace. You
+  must create a DNS CNAME record to gopherpath and so this domain cannot be the
+  same domain you serve your primary website from (although a subdomain is OK).
+
+- Point your custom domain at your application.  This is [more
+  involved](https://developers.google.com/appengine/docs/domain) than simply
+  creating a CNAME record. You may choose to do this later.
+
+- Follow the steps from Application Configuration, but make http requests using
+  the custom domain instead of the appspot.com domain.
+
+
+New Idea
+
+
+tell people to set up a working 'hello world' app using a custom domain (links:
+tutorial, custom domains).  then they can easily deploy gopherpath and skip
+some steps.
+
+
+Contributing
+
+
+I love outside contribution.  But I'd like for contribution to be fairly
+structured.  This code will be deployed in 'production' by many people
+(hopefully ;]).  Unregulated contribution and unstable code puts your own `go
+get` calls at risk of failing!
