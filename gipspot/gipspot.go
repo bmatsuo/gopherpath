@@ -9,10 +9,12 @@ import (
 	"html/template"
 	"net/http"
 	"path"
+	"strings"
 )
 
 func init() {
 	mux := pat.New()
+	mux.Get("/:pkgRoot", http.HandlerFunc(HandlePkg))
 	mux.Get("/:pkgRoot/", http.HandlerFunc(HandlePkg))
 	mux.Get("/", http.HandlerFunc(HandleRoot))
 	http.Handle("/", mux)
@@ -61,9 +63,9 @@ func HandlePkg(resp http.ResponseWriter, req *http.Request) {
 		c.Warningf("missing go-get query parameter")
 	}
 	pkgRoot := query.Get(":pkgRoot")
-	pkg := path.Join(pkgRoot, pat.Tail("/:pkgRoot/", req.URL.Path))
+	pkg := strings.TrimRight(path.Join(pkgRoot, pat.Tail("/:pkgRoot/", req.URL.Path)), "/")
 	c.Infof("request for package %v/%v", host, pkg)
-	repoPrefix := path.Join("https://github.com", assoc.GitHubLogin, pkgRoot)
+	repoPrefix := fmt.Sprintf("https://github.com/%v/%v", assoc.GitHubLogin, pkgRoot)
 	meta := &PkgMeta{
 		ImportPath:   path.Join(host, pkg),
 		ImportPrefix: host,
