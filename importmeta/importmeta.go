@@ -39,7 +39,7 @@ func Middleware(codec Codec) http.Handler {
 			}
 			err = pkgTemplate.Execute(resp, m)
 			if err != nil {
-				logf("error rending/writing metadata response: %v", err)
+				logf("error rendering/writing metadata response: %v", err)
 				resp.Write(nil)
 				return
 			}
