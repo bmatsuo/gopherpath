@@ -64,11 +64,11 @@ func HandlePkg(resp http.ResponseWriter, req *http.Request) {
 	}
 	pkgRoot := query.Get(":pkgRoot")
 	pkg := strings.TrimRight(path.Join(pkgRoot, pat.Tail("/:pkgRoot/", req.URL.Path)), "/")
-	c.Infof("request for package %v/%v", host, pkg)
+	c.Infof("request for package %v/%v at prefix %v/%v", host, pkg, host, pkgRoot)
 	repoPrefix := fmt.Sprintf("https://github.com/%v/%v", assoc.GitHubLogin, pkgRoot)
 	meta := &PkgMeta{
-		ImportPath:   path.Join(host, pkgRoot),
-		ImportPrefix: host,
+		ImportPath:   path.Join(host, pkg),
+		ImportPrefix: path.Join(host, pkgRoot),
 		VCS:          "git",
 		RepoPrefix:   repoPrefix,
 	}
