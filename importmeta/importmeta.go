@@ -60,15 +60,12 @@ func IsGoGet(req *http.Request) bool {
 // to a request.
 var ErrNotFound = fmt.Errorf("not found")
 
+// ImportMeta contains information needed for go-get to find a package.
 type ImportMeta struct {
-	// the fully qualified package import path (e.g. mygip.com/mypkg/mysub)
-	Pkg string
-	// the fully qualified root package import path (e.g. mygip.com/mypkg)
-	RootPkg string
-	// the VCS used by the host repository (e.g. git)
-	VCS string
-	// package repository URL (e.g. https://github.com/bmatsuo/mypkg)
-	Repo string
+	Pkg     string // fully qualified package import path (e.g. foo.io/bar/baz)
+	RootPkg string // fully qualified root package import path (e.g. foo.io/bar)
+	VCS     string // repository VCS (e.g. git)
+	Repo    string // repository URL (e.g. https://github.com/someuser/bar)
 }
 
 func (m ImportMeta) GodocURL() string {
