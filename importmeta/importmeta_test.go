@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -16,14 +17,6 @@ type MockCodec struct {
 
 func (c MockCodec) ImportMeta(req *url.URL) (ImportMeta, error) {
 	return c.meta, c.err
-}
-
-func TestPkgTemplate(t *testing.T) {
-	buf := new(bytes.Buffer)
-	err := pkgTemplate.Execute(buf, ImportMeta{})
-	if err != nil {
-		t.Fatalf("error executing package template: %v", err)
-	}
 }
 
 func TestIsGoGet(t *testing.T) {
@@ -94,6 +87,7 @@ func (rec *LogRecorder) Log(msg string) {
 	rec.logs = append(rec.logs, msg)
 }
 
+// for coverage. just make sure logf doesn't blow up for some crazy reason.
 func TestLog(t *testing.T) {
 	rec := new(LogRecorder)
 	Logger = rec
@@ -108,5 +102,32 @@ func TestLog(t *testing.T) {
 	}
 	if rec.logs[1] != "goodbye, friend" {
 		t.Fatalf("unexpected content of log entry 1: %v", rec.logs[1])
+	}
+}
+
+// make sure that pkgTemplate successfully renders and generates good meta tags.
+func TestTemplate(t *testing.T) {
+	meta := ImportMeta{
+		Pkg:     "foo.io/bar/baz",
+		RootPkg: "foo.io/bar",
+		VCS:     "git",
+		Repo:    "https://github.com/mcfoo/bar",
+	}
+	buf := new(bytes.Buffer)
+	err := pkgTemplate.Execute(buf, meta)
+	if err != nil {
+		t.Fatalf("error rendering template: %v", err)
+	}
+	html := buf.String()
+	metas := []string{
+		`<meta http-equiv="refresh" content="0; URL='http://godoc.org/foo.io/bar/baz'">`,
+		`<meta name="go-import" content="foo.io/bar git https://github.com/mcfoo/bar">`,
+	}
+	t.Logf("template output: %q", html)
+	for i := range metas {
+		ok := strings.Contains(html, metas[i])
+		if !ok {
+			t.Errorf("template output missing meta tag: %v", metas[i])
+		}
 	}
 }

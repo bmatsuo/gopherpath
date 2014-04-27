@@ -12,7 +12,7 @@ var pkgTemplate = template.Must(template.New("pkg").Parse(`
 <html>
 	<head>
 		<meta http-equiv="refresh" content="0; URL='{{$godoc}}'">
-		<meta name="go-import" content="{{.ImportPrefix}} {{.VCS}} {{.RepoPrefix}}">
+		<meta name="go-import" content="{{.RootPkg}} {{.VCS}} {{.Repo}}">
 	</head>
 	<body>
 		You are being redirected to <a href="{{$godoc}}">{{$godoc}}</a>.
@@ -61,14 +61,18 @@ func IsGoGet(req *http.Request) bool {
 var ErrNotFound = fmt.Errorf("not found")
 
 type ImportMeta struct {
-	ImportPath   string
-	ImportPrefix string
-	VCS          string
-	RepoPrefix   string
+	// the fully qualified package import path (e.g. mygip.com/mypkg/mysub)
+	Pkg string
+	// the fully qualified root package import path (e.g. mygip.com/mypkg)
+	RootPkg string
+	// the VCS used by the host repository (e.g. git)
+	VCS string
+	// package repository URL (e.g. https://github.com/bmatsuo/mypkg)
+	Repo string
 }
 
 func (m ImportMeta) GodocURL() string {
-	return fmt.Sprintf("http://godoc.org/%s", m.ImportPath)
+	return fmt.Sprintf("http://godoc.org/%s", m.Pkg)
 }
 
 type Codec interface {
