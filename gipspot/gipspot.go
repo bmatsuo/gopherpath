@@ -67,7 +67,7 @@ func HandlePkg(resp http.ResponseWriter, req *http.Request) {
 	c.Infof("request for package %v/%v", host, pkg)
 	repoPrefix := fmt.Sprintf("https://github.com/%v/%v", assoc.GitHubLogin, pkgRoot)
 	meta := &PkgMeta{
-		ImportPath:   path.Join(host, pkg),
+		ImportPath:   path.Join(host, pkgRoot),
 		ImportPrefix: host,
 		VCS:          "git",
 		RepoPrefix:   repoPrefix,
