@@ -4,12 +4,14 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /pkg/.*
+- url: /.*
   script: _go_app
-- url: /app/.*
-  script: _go_app
-- url: /
-  static_files: static/index.html
-  upload: static/*
-- url: /
-  static_dir: static
+#- url: /pkg/.*
+#  script: _go_app
+#- url: /app/.*
+#  script: _go_app
+#- url: /
+#  static_files: static/index.html
+#  upload: static/*
+#- url: /
+#  static_dir: static

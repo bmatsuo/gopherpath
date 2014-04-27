@@ -25,9 +25,6 @@ func GetDomainAssocsGitHubLogin(c appengine.Context, login string) ([]DomainAsso
 	for i := range keys {
 		assocs[i].Key = keys[i]
 	}
-	if len(keys) == 0 {
-		return assocs, errNotFound
-	}
 	return assocs, nil
 }
 
@@ -42,16 +39,13 @@ func GetDomainAssocs(c appengine.Context, domain string) ([]DomainAssoc, error) 
 	for i := range keys {
 		assocs[i].Key = keys[i]
 	}
-	if len(keys) == 0 {
-		return assocs, errNotFound
-	}
 	return assocs, nil
 }
 
 func PutDomainAssoc(c appengine.Context, assoc *DomainAssoc) error {
-	if assoc.GitHubLogin == "" {
-		return fmt.Errorf("unknown github login for association")
-	}
+	//if assoc.GitHubLogin == "" {
+	//	return fmt.Errorf("unknown github login for association")
+	//}
 	if assoc.Domain == "" {
 		return fmt.Errorf("unknown domain for association")
 	}
