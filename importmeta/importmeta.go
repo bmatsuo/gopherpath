@@ -7,11 +7,7 @@ import (
 	"net/url"
 )
 
-var pkgTemplate = template.Must(template.New("pkg").Funcs(template.FuncMap{
-	"godoc": func(path string) string {
-		return "http://godoc.org/" + path
-	},
-}).Parse(`
+var pkgTemplate = template.Must(template.New("pkg").Parse(`
 {{$godoc := .GodocURL}}
 <html>
 	<head>
@@ -23,7 +19,6 @@ var pkgTemplate = template.Must(template.New("pkg").Funcs(template.FuncMap{
 	</body>
 </html>
 `))
-
 
 // an HTTP middleware that responds to go-get requests.  the returned handler
 // must be given an implementation of http.ResponseWriter which records whether
