@@ -25,14 +25,14 @@ var pkgTemplate = template.Must(template.New("pkg").Funcs(template.FuncMap{
 		return "http://godoc.org/" + path
 	},
 }).Parse(`
+{{$godoc := godoc .ImportPath}}
 <html>
 	<head>
-		<!-- uncomment this when this thing actually works -->
-		<!--meta http-equiv="refresh" content="0; URL='http://godoc.org/{{.ImportPath}}'"-->
+		<meta http-equiv="refresh" content="0; URL='{{$godoc}}'">
 		<meta name="go-import" content="{{.ImportPrefix}} {{.VCS}} {{.RepoPrefix}}">
 	</head>
 	<body>
-		<strong>you are being redirected to <a href="{{godoc .ImportPath}}">{{godoc .ImportPath}}</a>.</strong>
+		You are being redirected to <a href="{{$godoc}}">{{$godoc}}</a>.
 	</body>
 </html>
 `))
@@ -58,13 +58,11 @@ func HandlePkg(resp http.ResponseWriter, req *http.Request) {
 	}
 	assoc := assocs[0]
 	query := req.URL.Query()
-	goget := query.Get("go-get")
-	if goget == "" {
+	if query.Get("go-get") == "" {
 		c.Warningf("missing go-get query parameter")
 	}
 	pkgRoot := query.Get(":pkgRoot")
 	pkg := strings.TrimRight(path.Join(pkgRoot, pat.Tail("/:pkgRoot/", req.URL.Path)), "/")
-	c.Infof("request for package %v/%v at prefix %v/%v", host, pkg, host, pkgRoot)
 	repoPrefix := fmt.Sprintf("https://github.com/%v/%v", assoc.GitHubLogin, pkgRoot)
 	meta := &PkgMeta{
 		ImportPath:   path.Join(host, pkg),
@@ -74,7 +72,7 @@ func HandlePkg(resp http.ResponseWriter, req *http.Request) {
 	}
 	err = pkgTemplate.Execute(resp, meta)
 	if err != nil {
-		c.Errorf("couldn't render package template")
+		c.Errorf("error rendering package template: %v", err)
 	}
 }
 
@@ -110,17 +108,4 @@ func HandleRoot(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Fprintf(resp, "%v directs clients to source repositories at https://github.com/%v", host, assoc.GitHubLogin)
-}
-
-func topLevelDir(fullpath string) string {
-	p1 := fullpath
-	p2 := path.Dir(fullpath)
-	for {
-		if p2 == "/" || p2 == "." {
-			return path.Base(p1)
-		}
-		p1 = p2
-		p2 = path.Dir(p2)
-	}
-	panic("unreachable")
 }
