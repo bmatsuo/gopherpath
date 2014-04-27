@@ -72,7 +72,7 @@ type ImportMeta struct {
 	RepoPrefix   string
 }
 
-func (m *ImportMeta) GodocURL() string {
+func (m ImportMeta) GodocURL() string {
 	return fmt.Sprintf("http://godoc.org/%s", m.ImportPath)
 }
 

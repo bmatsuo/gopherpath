@@ -18,6 +18,14 @@ func (c MockCodec) ImportMeta(req *url.URL) (ImportMeta, error) {
 	return c.meta, c.err
 }
 
+func TestPkgTemplate(t *testing.T) {
+	buf := new(bytes.Buffer)
+	err := pkgTemplate.Execute(buf, ImportMeta{})
+	if err != nil {
+		t.Fatalf("error executing package template: %v", err)
+	}
+}
+
 func TestIsGoGet(t *testing.T) {
 	for i, test := range []struct {
 		Method string
