@@ -1,3 +1,5 @@
+Do not use this repository. It's far too immature.
+
 Gopherpath -- reliably hosted Go import paths
 
 Gopherpath is an application for Google App Engine and serves import metadata
@@ -95,7 +97,7 @@ some steps.
 Contributing
 
 
-I love outside contribution.  But I'd like for contribution to be fairly
-structured.  This code will be deployed in 'production' by many people
-(hopefully ;]).  Unregulated contribution and unstable code puts your own `go
-get` calls at risk of failing!
+Create issues before submitting pull requests.  I love outside contribution.
+But I'd like for contribution to be fairly structured.  This code will be
+deployed in 'production' by many people (hopefully ;]).  Unregulated
+contribution and unstable code puts your own `go get` calls at risk of failing!
