@@ -79,12 +79,6 @@ var Logger interface {
 	Log(string)
 }
 
-func log(v ...interface{}) {
-	if Logger != nil {
-		Logger.Log(fmt.Sprint(v...))
-	}
-}
-
 func logf(format string, v ...interface{}) {
 	if Logger != nil {
 		Logger.Log(fmt.Sprintf(format, v...))

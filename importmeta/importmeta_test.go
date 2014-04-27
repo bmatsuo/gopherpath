@@ -85,3 +85,28 @@ func TestMiddlewareBehavior(t *testing.T) {
 		}
 	}
 }
+
+type LogRecorder struct {
+	logs []string
+}
+
+func (rec *LogRecorder) Log(msg string) {
+	rec.logs = append(rec.logs, msg)
+}
+
+func TestLog(t *testing.T) {
+	rec := new(LogRecorder)
+	Logger = rec
+	defer func() { Logger = nil }()
+	logf("hello, %v", "world")
+	logf("goodbye, %v", "friend")
+	if len(rec.logs) != 2 {
+		t.Fatalf("unexpected number of log entries (%d): %v", len(rec.logs), rec.logs)
+	}
+	if rec.logs[0] != "hello, world" {
+		t.Fatalf("unexpected content of log entry 0: %v", rec.logs[0])
+	}
+	if rec.logs[1] != "goodbye, friend" {
+		t.Fatalf("unexpected content of log entry 1: %v", rec.logs[1])
+	}
+}
