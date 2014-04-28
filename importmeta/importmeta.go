@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"net/url"
 )
 
-var pkgTemplate = template.Must(template.New("pkg").Parse(`
+// PkgTemplate describes the content served by Handler and Middleware return
+// values.  It is invoked with an ImportMeta type as its context.
+var PkgTemplate = template.Must(template.New("pkg").Parse(`
 {{$godoc := .GodocURL}}
 <html>
 	<head>
@@ -20,34 +21,48 @@ var pkgTemplate = template.Must(template.New("pkg").Parse(`
 </html>
 `))
 
-// an HTTP middleware that responds to go-get requests.  the returned handler
-// must be given an implementation of http.ResponseWriter which records whether
-// the response headers have been sent over the wire.
-func Middleware(codec Codec) http.Handler {
+// Handler creates an http.Handler that serves all requests as go-get requests.
+func Handler(codec Codec) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-		if IsGoGet(req) {
-			m, err := codec.ImportMeta(req.URL)
-			if err == ErrNotFound {
-				logf("no metadata for url %q: %v", req.URL, err)
-				http.Error(resp, "unrecognized package", http.StatusNotFound)
-				return
-			}
-			if err != nil {
-				logf("error locating metadata for url %q: %v", req.URL, err)
-				http.Error(resp, "something went wrong", http.StatusInternalServerError)
-				return
-			}
-			err = pkgTemplate.Execute(resp, m)
-			if err != nil {
-				logf("error rendering/writing metadata response: %v", err)
-				resp.Write(nil)
-				return
-			}
+		m, err := codec.ImportMeta(req)
+		if err == ErrNotFound {
+			logf("no metadata for url %q: %v", req.URL, err)
+			http.Error(resp, "unrecognized package", http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			logf("error locating metadata for url %q: %v", req.URL, err)
+			http.Error(resp, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+		err = PkgTemplate.Execute(resp, m)
+		if err != nil {
+			logf("error rendering/writing metadata response: %v", err)
+			resp.Write(nil)
+			return
 		}
 	})
 }
 
-// true if req is a GET request with a "go-get" query parameter.
+// Middleware is like Handler, but the returned http.Handler only writes
+// responses to go-get requests.  to be useful the returned handler must be
+// given an implementation of http.ResponseWriter which records whether the
+// response headers have been sent over the wire.
+func Middleware(codec Codec) http.Handler {
+	handler := Handler(codec)
+	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		if IsGoGet(req) {
+			handler.ServeHTTP(resp, req)
+		}
+	})
+}
+
+// Render executes PkgTemplate with meta as its context.
+func Render(resp http.ResponseWriter, meta ImportMeta) error {
+	return PkgTemplate.Execute(resp, meta)
+}
+
+// IsGoGet returns true if req is a GET request with a "go-get" query parameter.
 func IsGoGet(req *http.Request) bool {
 	if req.Method != "GET" {
 		return false
@@ -56,8 +71,8 @@ func IsGoGet(req *http.Request) bool {
 	return present
 }
 
-// a Codec may return ErrNotFound if there is no import metadata corresponding
-// to a request.
+// ErrNotFound is may returned by a Codec if there is no import metadata
+// corresponding to a request.
 var ErrNotFound = fmt.Errorf("not found")
 
 // ImportMeta contains information needed for go-get to find a package.
@@ -72,8 +87,15 @@ func (m ImportMeta) GodocURL() string {
 	return fmt.Sprintf("http://godoc.org/%s", m.Pkg)
 }
 
+// Codec defines the interface required of implementation specific backend stores.
 type Codec interface {
-	ImportMeta(req *url.URL) (ImportMeta, error)
+	ImportMeta(*http.Request) (ImportMeta, error)
+}
+
+type CodecFunc func(*http.Request) (ImportMeta, error)
+
+func (fn CodecFunc) ImportMeta(req *http.Request) (ImportMeta, error) {
+	return fn(req)
 }
 
 var Logger interface {

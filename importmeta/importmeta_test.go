@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 )
@@ -15,7 +14,7 @@ type MockCodec struct {
 	err  error
 }
 
-func (c MockCodec) ImportMeta(req *url.URL) (ImportMeta, error) {
+func (c MockCodec) ImportMeta(req *http.Request) (ImportMeta, error) {
 	return c.meta, c.err
 }
 

@@ -1,83 +1,56 @@
 package main
 
 import (
-	"vendor/pat"
+	"importmeta"
 
 	"appengine"
 
 	"fmt"
-	"html/template"
 	"net/http"
 	"path"
-	"strings"
 )
 
 func init() {
-	mux := pat.New()
-	mux.Get("/:pkgRoot", http.HandlerFunc(HandlePkg))
-	mux.Get("/:pkgRoot/", http.HandlerFunc(HandlePkg))
-	mux.Get("/", http.HandlerFunc(HandleRoot))
-	http.Handle("/", mux)
+	http.HandleFunc("/", HandleRoot)
 }
 
-var pkgTemplate = template.Must(template.New("pkg").Funcs(template.FuncMap{
-	"godoc": func(path string) string {
-		return "http://godoc.org/" + path
-	},
-}).Parse(`
-{{$godoc := godoc .ImportPath}}
-<html>
-	<head>
-		<meta http-equiv="refresh" content="0; URL='{{$godoc}}'">
-		<meta name="go-import" content="{{.ImportPrefix}} {{.VCS}} {{.RepoPrefix}}">
-	</head>
-	<body>
-		You are being redirected to <a href="{{$godoc}}">{{$godoc}}</a>.
-	</body>
-</html>
-`))
-
-type PkgMeta struct {
-	ImportPath   string
-	ImportPrefix string
-	VCS          string
-	RepoPrefix   string
-}
-
-func HandlePkg(resp http.ResponseWriter, req *http.Request) {
+var MetaCodec = importmeta.CodecFunc(func(req *http.Request) (importmeta.ImportMeta, error) {
+	var meta importmeta.ImportMeta
 	c := appengine.NewContext(req)
 	host := req.Host
 	assocs, err := GetDomainAssocs(c, host)
 	if err != nil {
-		http.Error(resp, "an error occurred", http.StatusInternalServerError)
-		return
+		c.Errorf("error retrieving host association: %v", host)
+		return meta, err
 	}
 	if len(assocs) == 0 {
-		http.Error(resp, "unknown host: "+host, http.StatusNotFound)
-		return
+		c.Warningf("request for unknown host: %v", host)
+		return meta, importmeta.ErrNotFound
 	}
-	assoc := assocs[0]
-	query := req.URL.Query()
-	if query.Get("go-get") == "" {
-		c.Warningf("missing go-get query parameter")
+	pkgRootBase := topLevelDir(req.URL.Path)
+	meta.Pkg = path.Join(host, req.URL.Path)
+	meta.RootPkg = path.Join(host, pkgRootBase)
+	meta.VCS = "git"
+	meta.Repo = fmt.Sprintf("https://github.com/%v/%v", assocs[0].GitHubLogin, pkgRootBase)
+	return meta, nil
+})
+var MetaHandler = importmeta.Handler(MetaCodec)
+
+func topLevelDir(reqpath string) string {
+	dir, file := path.Split(reqpath)
+	if dir == "" || dir == "/" {
+		return file
 	}
-	pkgRoot := query.Get(":pkgRoot")
-	pkg := strings.TrimRight(path.Join(pkgRoot, pat.Tail("/:pkgRoot/", req.URL.Path)), "/")
-	repoPrefix := fmt.Sprintf("https://github.com/%v/%v", assoc.GitHubLogin, pkgRoot)
-	meta := &PkgMeta{
-		ImportPath:   path.Join(host, pkg),
-		ImportPrefix: path.Join(host, pkgRoot),
-		VCS:          "git",
-		RepoPrefix:   repoPrefix,
-	}
-	err = pkgTemplate.Execute(resp, meta)
-	if err != nil {
-		c.Errorf("error rendering package template: %v", err)
-	}
+	return topLevelDir(dir)
 }
 
 func HandleRoot(resp http.ResponseWriter, req *http.Request) {
 	c := appengine.NewContext(req)
+
+	if req.URL.Path != "/" {
+		MetaHandler.ServeHTTP(resp, req)
+		return
+	}
 
 	host := req.Host
 	assocs, err := GetDomainAssocs(c, host)
