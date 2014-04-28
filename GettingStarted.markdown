@@ -31,7 +31,7 @@ Simply make a GET request to your domain's root path.
     curl -i http://go.example.com
 
 This will return an error (404 Not Found) and give instructions specifying
-datastore entities that need modification and how the need to be modified.
+datastore entities that need modification and how they need to be modified.
 After modifying the specified entities repeating the previous curl should
 succeed (200 OK).
 

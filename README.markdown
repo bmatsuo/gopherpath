@@ -4,8 +4,8 @@ Gopherpath -- reliably hosted Go import paths
 
 Gopherpath is an application for Google App Engine and serves import metadata
 for the `go get` tool.  It lets you easily 'self-host' your own import paths
-(e.g. go.bmats.co/gopherpath/xxx) in an environment where you don't have to
-actually worry about maintaining servers.
+(e.g. go.bmats.co/gopherpath/importmeta) in an environment where you don't have
+to actually worry about maintaining servers.
 
 The tool is similar in spirit to [gopkg.in](gopkg.in), and may eventually pull
 in some of its features (semantic version support).  The primary difference is
